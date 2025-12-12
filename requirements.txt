@@ -1,0 +1,16 @@
+pandas
+numpy
+tqdm
+pyyaml
+scikit-learn
+
+langchain
+langchain-community
+langchain-core
+
+openai
+
+sentence-transformers
+
+faiss-cpu
+huggingface-hub
