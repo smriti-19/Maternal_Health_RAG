@@ -1,0 +1,33 @@
+# secrets
+.env
+.env.*
+*.pem
+*.key
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# editors / OS
+.vscode/
+.idea/
+.DS_Store
+
+# outputs
+outputs/
+results/
+runs/
+*.log
+
+# indexes / embeddings / large artifacts
+indexes/
+vectorstore*/
+embeddings*/
+*.pkl
+*.faiss
+*.index
