@@ -1,0 +1,227 @@
+version: v0.2-stage1
+locale: en
+regex_flags: ["IGNORECASE"]
+
+actions:
+  on_emergency_now: CRISIS
+  on_same_day: SAME_DAY
+  on_none: PASS_THROUGH
+
+# 1) Stage detection (text-first; metadata can override in code)
+detect_stage:
+  maternal_pregnant:
+    any:
+      - "\\b(weeks?|months?)\\s+pregnant\\b"
+      - "\\bpregnan(t|cy)\\b"
+      - "\\btrimester\\b"
+      - "\\bdue date\\b"
+      - "\\bantenatal\\b|\\banc\\b"
+      - "\\bkick(s|ing)?\\b"
+      - "\\bfetal\\b"
+      - "\\bbaby\\s+(move(s|ment)?|moving)\\b"
+      - "\\bexpecting\\b"
+  maternal_postpartum:
+    any:
+      - "\\bpostpartum\\b|\\bpost partum\\b|\\bpost-natal\\b|\\bpostnatal\\b"
+      - "\\bsince (delivery|birth)\\b"
+      - "\\bafter (delivery|birth)\\b"
+      - "\\bc[-\\s]section\\b|\\bcsection\\b|\\bcesarean\\b"
+      - "\\blochia\\b"
+      - "\\bbreast(\\s|-)?(pain|feed|feeding)\\b"
+      - "\\bgave\\s+birth\\b"
+      - "\\bhad\\s+(a|my|the)\\s+baby\\b"
+
+# 2) Severity gates - BROADENED PATTERNS
+severity_gate:
+  maternal:
+    EMERGENCY_NOW:
+      any:
+        # Suicidality / self-harm - BROADER PATTERNS
+        - "end(ing)?\\s+(my\\s+)?life"
+        - "can'?t\\s+(do\\s+this|go\\s+on|take\\s+it)"
+        - "kill\\s+myself"
+        - "suicide|suicidal"
+        - "unalive"
+        - "don'?t\\s+want\\s+to\\s+live"
+        - "want\\s+to\\s+die"
+        - "better\\s+off\\s+dead"
+        - "end\\s+it\\s+all"
+        - "voices.*tell(ing)?\\s+me"
+        - "command\\s+hallucin"
+        
+        # Domestic violence - current danger
+        - "not\\s+safe\\s+at\\s+home"
+        - "won'?t\\s+let\\s+me\\s+leave"
+        - "can'?t\\s+leave\\s+(the\\s+)?house"
+        - "he\\s+(hit|hits|hurts?|hurt)\\s+me"
+        - "being\\s+(held|blocked|trapped)"
+        - "threat(en|s|ed|ening)"
+        - "escalating\\s+violence"
+        - "afraid\\s+(of|for)\\s+my\\s+safety"
+        - "physical(ly)?\\s+(hurt|harm|abuse)"
+        
+        # Heavy vaginal bleeding - MUCH BROADER
+        - "severe\\s+bleed(ing)?"
+        - "heavy\\s+bleed(ing)?"
+        - "won'?t\\s+stop\\s+bleed(ing)?"
+        - "bleed(ing)?.*won'?t\\s+stop"
+        - "bleed(ing)?.*(through|thru)\\s+pads?"
+        - "soak(ing|ed)?.*pads?"
+        - "pads?.*every\\s+hour"
+        - "pads?.*per\\s+hour"
+        - "passing\\s+(large\\s+)?clots"
+        - "gush(ing|ed)?\\s+(of\\s+)?blood"
+        - "hemorrhag"
+        
+        # Seizure
+        - "seizure"
+        - "convuls(ion|ive|ing)?"
+        - "\\bfit\\b"
+        - "shaking\\s+uncontrollably"
+        
+        # Chest pain / severe SOB - BROADER
+        - "chest\\s+pain"
+        - "heart\\s+pain"
+        - "can'?t\\s+(breathe|catch\\s+my\\s+breath)"
+        - "severe.*short(ness)?\\s+of\\s+breath"
+        - "difficult(y)?\\s+breathing"
+        - "gasping\\s+for\\s+(air|breath)"
+        
+        # Preeclampsia features - BROADER
+        - "severe\\s+headache"
+        - "bad\\s+headache.*(vision|blur|see)"
+        - "headache.*(blurr|vision|spots|flash|lights)"
+        - "vision.*blur.*headache"
+        - "seeing\\s+(spots|stars|flash)"
+        - "ruq\\s+pain|epigastric\\s+pain"
+        - "sudden.*swelling.*(face|hand|feet)"
+        - "swelling.*(face|facial|hand).*sudden"
+        
+        # Postpartum psychosis
+        - "postpartum.*(psychosis|hallucin|voices|paranoi)"
+        - "hearing\\s+voices"
+        - "seeing\\s+things.*(not\\s+there|aren'?t\\s+there)"
+        - "paranoid|paranoia"
+        - "disorgan(ized|ised)\\s+(thinking|thought|behavior)"
+        
+        # Ectopic-like presentation - BROADER
+        - "severe.*(one|unilateral)[-\\s]?(sided)?\\s+.*pain"
+        - "one[-\\s]?sided\\s+.*pain.*(sharp|severe|faint)"
+        - "shoulder\\s+(tip\\s+)?pain.*(abdominal|dizz|faint)"
+        - "abdominal\\s+pain.*(shoulder|faint|dizz|collapse)"
+        
+        # Decreased fetal movement WITH red flags
+        - "baby.*(not\\s+mov|stop.*mov|no\\s+mov).*(bleed|pain|fluid)"
+        - "decreased.*fetal.*movement.*(bleed|fluid|pain)"
+        - "fetal\\s+movement.*(decreas|reduc|less).*(bleed|fluid)"
+    
+    SAME_DAY:
+      any:
+        # Mastitis - BROADER
+        - "mastitis"
+        - "breast\\s+(pain|tender|red|warm|hot)"
+        - "breast.*fever"
+        - "fever.*breast"
+        
+        # Decreased fetal movement WITHOUT red flags
+        - "baby.*(not\\s+mov|hasn'?t\\s+mov|less\\s+mov|fewer\\s+kick)"
+        - "decreased\\s+fetal\\s+movement"
+        - "fetal\\s+movement.*(decreas|reduc|less)"
+        - "fewer\\s+kicks"
+        - "baby\\s+mov.*(less|not.*much|normal)"
+        
+        # Infections - BROADER
+        - "(uti|urinary).*(fever|hot)"
+        - "fever.*(uti|urin|pee)"
+        - "burning.*(urin|pee).*fever"
+        - "fever.*burning.*(urin|pee)"
+        - "(incision|wound|c[-\\s]?section|stitch).*(red|drain|pus|ooz|infect|smell|warm)"
+
+# 3) Crisis subtype detection
+crisis_subtype:
+  MH:
+    any:
+      - "end(ing)?\\s+.*life"
+      - "kill\\s+myself"
+      - "suicide|suicidal"
+      - "unalive"
+      - "can'?t\\s+go\\s+on"
+      - "want\\s+to\\s+die"
+      - "don'?t\\s+want\\s+to\\s+live"
+      - "voices.*tell"
+  DV:
+    any:
+      - "not\\s+safe\\s+at\\s+home"
+      - "won'?t\\s+let\\s+me\\s+leave"
+      - "he\\s+(hit|hurts?)\\s+me"
+      - "threat(en|s)"
+      - "being\\s+(held|blocked)"
+      - "violence"
+      - "afraid.*safety"
+      - "physical.*abuse"
+  MEDICAL:
+    any:
+      - "bleed|hemorrhag"
+      - "seizure|convuls"
+      - "chest\\s+pain"
+      - "short(ness)?\\s+of\\s+breath|can'?t\\s+breathe"
+      - "headache|vision"
+      - "swelling"
+      - "abdominal\\s+pain|shoulder\\s+pain"
+      - "psychosis|hallucin|paranoi"
+      - "fetal\\s+movement|baby.*mov"
+      - "mastitis|breast"
+      - "uti|urin"
+      - "incision|wound"
+
+# 4) Negation guards
+negation_guard:
+  window_chars: 50
+  terms:
+    - "not"
+    - "no"
+    - "never"
+    - "without"
+    - "denies?"
+    - "denied"
+    - "denying"
+
+# 5) Templates
+templates:
+  CRISIS_MH:
+    text: |
+      Your safety is the priority. If you have thoughts about harming yourself or others, contact local emergency services now. Please contact Suicide & Crisis Helpline: India: 9152987821, US: 988, UK: 0800 689 5652.
+
+  CRISIS_DV:
+    text: |
+      Your safety is the priority. If you are in danger, contact local emergency services now. In the United States, confidential help is available at the National Domestic Violence Hotline: 1-800-799-7233 (TTY 1-800-787-3224).
+
+  CRISIS_MEDICAL_MATERNAL:
+    text: |
+      IMPORTANT: This appears to be an emergency situation that requires immediate medical attention.
+
+      This chatbot cannot provide emergency medical advice. Please:
+      1. Contact your healthcare provider immediately OR
+      2. Go to the nearest emergency department OR
+      3. Call your local emergency number for immediate assistance.
+
+      Do not wait or delay seeking professional care.
+
+  SAME_DAY_MATERNAL:
+    text: |
+      This should be checked by a clinician today. Contact your OB provider or clinic. If symptoms worsen—trouble breathing, severe pain, heavy bleeding, or high fever—seek emergency care immediately.
+
+# 6) Logging fields
+logging_fields:
+  - guardrail_stage
+  - guardrail_severity
+  - guardrail_action
+  - guardrail_crisis_type
+  - guardrail_template
+
+# Notes
+notes:
+  - Stage 1 scope: maternal_pregnant and maternal_postpartum only
+  - Patterns BROADENED to catch natural language variations
+  - Negation guards for suicidality patterns
+  - Emergency-now takes precedence over same-day
