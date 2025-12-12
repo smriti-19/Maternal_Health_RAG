@@ -1,0 +1,31 @@
+model:
+  llm: gpt-4-turbo
+  temperature: 0.1
+  request_timeout: 60
+  max_retries: 3
+
+guardrails:
+  enable: true
+  enable_debug: true
+  enable_llm_labels: true
+  emergency_threshold: 0.5
+  policy_path: guardrails/stage2_policy.yaml
+
+retrieval:
+  top_k: 15
+  rerank_top_k: 7
+  use_reranking: true
+  reranker_model: cross-encoder/ms-marco-MiniLM-L-6-v2
+  embedding_model: intfloat/multilingual-e5-large-instruct
+
+paths:
+  questions_csv: data/questions/questions.csv
+  output_file: outputs/guardrail_rag_output.json
+
+runtime:
+  max_concurrent: 5
+  translate_to_english: true
+
+indexes:
+  faiss_db_dir: ${FAISS_DB_DIR}
+  bm25_path: ${BM25_PATH}
